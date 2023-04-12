@@ -1,0 +1,368 @@
+<aura:component implements="lightning:actionOverride" access="global" controller="NewMemberController">
+    <aura:attribute name="isModalOpen" type="boolean" default="false"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <aura:handler event="aura:systemError" action="{!c.showSystemError}"/>
+    <aura:attribute name="response" type="Aura.Action"/>
+        <aura:attribute name="memId" type="String"/>
+
+    <aura:attribute name="projectId" type="String"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="recordId" type="String"/>
+    <aura:attribute name="contactId" type="String"/>
+    <aura:attribute name="primarymemberId" type="String"/>
+    <aura:attribute name="primarymemDupId" type="String"/>
+    <aura:attribute name="nomineeId" type="String"/>
+    <aura:attribute name="nomineeList" type="Nominee__c[]"/>
+    <aura:attribute name="nomineeWrapper" type="object"/>
+    <aura:attribute name="nomineeWrapperList" type="object[]"/>
+    <aura:attribute name="hide" type="Boolean" />
+    <aura:attribute name="ContactWrapper" type="object"/>
+    <aura:attribute name="pageReference" type="Object"/>
+    <aura:handler name="change" value="{!v.projectId}" action="{!c.getProject}"/>
+    <aura:handler name="change" value="{!v.pageReference}" action="{!c.reInit}" />
+    <aura:handler name="change" action="{!c.reInit}" value="{!this}" />
+    <aura:attribute name="memberWrapper" type="object"/>
+    <aura:attribute name="accountWrapper" type="object"/>
+    <aura:attribute name="filetype" type="List" default="['.png', '.jpg', '.jpeg', '.pdf']" />
+    <aura:attribute name="multiple" type="Boolean" default="true" />
+    <aura:attribute name="dateValidationError" type="boolean" />
+    <aura:attribute name="fileIds" type="Set" />
+    <aura:attribute name="uploadWrapper" type="object[]" /> 
+    <aura:attribute name="identificationId" type="String"/>
+    <aura:attribute name="identificationWrapper" type="object[]" />
+    <aura:attribute name="nomiFName" type="String"/>
+    <aura:attribute name="nomiLName" type="String"/>
+    <aura:attribute name="nomWrap" type="map"/>
+    <aura:attribute name="indexValue" type="String"/>
+    
+    <aura:attribute Name="selItem3" type="object"  access="public" />
+    <aura:attribute name="contactRecordList" type="object[]"/>
+    <aura:attribute name="showConLink" type="boolean" default="false"/>
+    <aura:attribute name="showSearch" type="boolean" default="false"/>
+    <lightning:navigation aura:id="navService"/>
+    
+    <aura:attribute name="loaded" type="Boolean" default="false" />
+	
+    
+    <div class="slds-m-around_xx-large">
+        <lightning:recordEditForm aura:id="newmemberCreateFrom" objectApiName="Narne_New_Member__c" onsubmit="{!c.handleOnSubmit}" onsuccess="{!c.handleOnSuccess}" onerror="{!c.handleOnError}">
+            <!--<lightning:messages closable="true" />-->
+            <aura:if isTrue="{!v.isModalOpen}">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <lightning:buttonIcon iconName="utility:close"
+                                                  onclick="{!c.handleOnCancel}"
+                                                  alternativeText="close"
+                                                  variant="bare-inverse"
+                                                  class="slds-modal__close"/>
+                            <h2 id="modal-heading-01" class="slds-text-heading--medium">New Member</h2>
+                        </header>
+                        <!--Modal/Popup Box Body Starts here-->
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                 
+                            
+        						<!--<lightning:spinner aura:id="mySpinner" class="slds-hide"/>-->
+                            	<lightning:spinner variant="brand" alternativeText="Loading..." class="{!(v.loaded? 'slds-show': 'slds-hide')}"/>
+                                <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                    <lightning:layoutItem size="12" padding="around-small">
+                                        <lightning:input name="existingCon" aura:id="existingCon" type="checkbox" label="Select Existing Contact" onchange="{!c.selectContactType}"/>
+                                    </lightning:layoutItem>
+                                </lightning:layout>
+                           
+                            <aura:if isTrue="{!v.showSearch}">
+                                <h3 class="slds-section-title--divider" >Search Existing Contact</h3><!--style="background-color: blue;color:white;"-->
+                                <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                    <lightning:layoutItem size="5" padding="around-small">
+                                        <lightning:input name="mobilePhone" aura:id="mobilePhone" label="Enter Mobile Phone"/>
+                                    </lightning:layoutItem>
+                                    
+                                    <lightning:layoutItem size="5" padding="around-small">
+                                        <lightning:input name="emailid" aura:id="emailid" label="Enter Email"/>
+                                    </lightning:layoutItem>
+                                    <lightning:layoutItem size="2" class="slds-p-top_medium slds-p-left_small">
+                                        <lightning:button variant="brand" label="Search" title="Search" onclick="{!c.searchContact}"/>
+                                    </lightning:layoutItem>
+                                </lightning:layout>
+                            </aura:if>
+                            
+                            
+                            <aura:if isTrue="{!v.showConLink}">
+                                <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                    <lightning:layoutItem size="5" padding="around-small">
+                                        Click to select the contact:
+                                        <aura:iteration items="{!v.contactRecordList}" var="con"  indexVar="index">
+                                        	<tr>
+                                                <td>
+                                                    <a href="javascript:void(0)" onclick="{!c.updateContactLookup}" data-id="{!index}">
+                                                        {!con.Name}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </aura:iteration>
+                                        
+                                    </lightning:layoutItem>
+                                </lightning:layout>
+                            </aura:if>
+                            <h3 class="slds-section-title--divider" >Basic Information</h3><!--style="background-color: blue;color:white;"-->
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <l_lookup:Lookup aura:id="projectLookupId" objectType="Narne_Project__c" selectedRecordId="{!v.projectId}" label="Project Name" isRequired = "true"/>
+                                </lightning:layoutItem>                                
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Name" value="{!v.memberWrapper.memNo}" required="true" disabled="true"/>                               
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <aura:if isTrue="{!v.showConLink}">
+                                <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                    <lightning:layoutItem size="6" padding="around-small">
+                                        <l_lookup:Lookup aura:id="contactLookupId" objectType="Contact" selectedRecordId="{!v.contactId}" label="Existing Contact" isRequired = "false"/>                               
+                                    </lightning:layoutItem>
+                                </lightning:layout>
+                            </aura:if>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Salutation__c" value="{!v.ContactWrapper.conSalutation}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>  
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_First_Name__c" value="{!v.ContactWrapper.conFname}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">                                
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Middle_Name__c" value="{!v.ContactWrapper.conMname}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Last_Name__c" value="{!v.ContactWrapper.conLname}" isRequired = "true" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">                                
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Gender__c" value="{!v.ContactWrapper.conGender}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem> 
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Date_of_Birth__c" value="{!v.ContactWrapper.conDOB}" onchange="{!c.dateUpdate}" disabled="{!v.showConLink}"/>
+                                    <!--<aura:if isTrue="{!v.dateValidationError}">
+                                        <div class="slds-text-color_error slds-p-left_x-small" style="padding-left:140px;padding-top:0px;padding-bottom:0px">
+                                            Date must be in Past..
+                                        </div>
+                                    </aura:if>-->
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">                                
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Occupation__c" value="{!v.ContactWrapper.conOccupation}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>                                                          
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Status__c" value="{!v.Narne_Status__c}" />
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">                                
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <l_lookup:Lookup aura:id="primarymemberLookupId" objectType="Narne_New_Member__c" selectedRecordId="{!v.primarymemberId}" label="Primary Member" />
+                                </lightning:layoutItem>                                                          
+                            </lightning:layout>
+                            <h3 class="slds-section-title--divider">Contact Information</h3>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="Mobile1" fieldName="Narne_Official_Number__c" value="{!v.ContactWrapper.conMobile1}" disabled="{!v.showConLink}" required="true"/>
+                                </lightning:layoutItem> 
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="Mobile2" fieldName="Narne_Number__c" value="{!v.ContactWrapper.conMobile2}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>                                
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Official_Email__c" value="{!v.ContactWrapper.conEmail1}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem> 
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Personal_Email__c" value="{!v.ContactWrapper.conEmail2}" disabled="{!v.showConLink}"/>
+                                </lightning:layoutItem>                                
+                            </lightning:layout>
+                            <h3 class="slds-section-title--divider">Other Information</h3>                                                  
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Fee__c" value="{!v.newmember.Narne_Fee__c}"/>
+                                </lightning:layoutItem> 
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Defence__c" value="{!v.ContactWrapper.conDefence}"/>
+                                </lightning:layoutItem>                                
+                            </lightning:layout>
+                            <h3 class="slds-section-title--divider">Legal Information</h3>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Legal_Customer__c" value="{!v.newmember.Narne_Legal_Customer__c}"/>
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Case_details__c" value="{!v.newmember.Narne_Case_details__c}"/>
+                                </lightning:layoutItem>                                                                
+                            </lightning:layout>
+                            <h3 class="slds-section-title--divider">Identification Information</h3>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">                           
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Identiication_Type__c" value="{!v.newmember.Narne_Identiication_Type__c}"/>
+                                </lightning:layoutItem> 
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Narne_Identification_No__c" value="{!v.newmember.Narne_Identification_No__c}"/>
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:fileUpload label="Member Image" name="fileUploader"  multiple="true" accept="{!v.filetype}"  onuploadfinished="{!c.handleUploadFinished}" />
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:fileUpload label="Identification Document" name="fileUploader"  multiple="true" accept="{!v.filetype}"  onuploadfinished="{!c.handleUpload}" />
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">            
+                                <aura:iteration items="{!v.uploadWrapper}" var="item">
+                                    <div class="slds-align_horizontal">
+                                        <lightning:fileCard fileId="{!item.documentId}" description="Sample Description"/><br/>
+                                    </div>
+                                </aura:iteration>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <aura:iteration items="{!v.identificationWrapper}" var="item">
+                                    <div class="slds-align_horizontal">
+                                        <lightning:fileCard fileId="{!item.documentId}" description="Description"/><br/>
+                                    </div>
+                                </aura:iteration>                                                                
+                            </lightning:layout>
+                            <h3 class="slds-section-title--divider">Address Information</h3> 
+                            <div class="slds-grid">
+                                <div class="slds-col" style="text-align:right;padding-left:350px;padding-top:10px">(If Permanent Address is same as Current Address)</div>
+                                <div class="slds-col" style="padding-left:10px;padding-top:10px"><lightning:input type="checkbox" variant="label-hidden" class="nolabel slds-form_horizontal" onchange="{!c.checkboxSelect}"/></div>
+                            </div>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <p><b><u>Current Address</u></b></p>
+                                    <lightning:inputField aura:id="preHNo" fieldName="Narne_Present_House_No__c" aria-selected="true" tabIndex="1"/>
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">                                    
+                                    <p><b><u>Permanent Address</u></b></p>
+                                    <lightning:inputField aura:id="perHNo" fieldName="Narne_Permanent_House_No__c" aria-selected="true" tabIndex="3"/>
+                                </lightning:layoutItem>                                
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="preStreet" fieldName="Narne_Present_Street__c" aria-selected="true" tabIndex="2"/><!--value="{!v.newmember.Narne_Present_Street__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perStreet" fieldName="Narne_Permanent_Street__c" aria-selected="true" tabIndex="4"/><!--value="{!v.newmember.Narne_Permanent_Street__c}"-->
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="preLM" fieldName="Narne_Present_Landmark__c" tabIndex="5"/><!--value="{!v.newmember.Narne_Present_Landmark__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perLM" fieldName="Narne_Permanent_Landmark__c" /><!--value="{!v.newmember.Narne_Present_Landmark__c}"-->
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="preArea" fieldName="Narne_Present_Area__c" /><!--value="{!v.newmember.Narne_Present_Area__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perArea" fieldName="Narne_Permanent_Area__c" /><!--value="{!v.newmember.Narne_Permanent_Area__c}"-->
+                                </lightning:layoutItem>
+                            </lightning:layout>                            
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="preCity" fieldName="Narne_Present_City__c" /><!--value="{!v.newmember.Narne_Present_City__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perCity" fieldName="Narne_Permanent_City__c" /><!--value="{!v.newmember.Narne_Permanent_City__c}"-->
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="prePstate" fieldName="Narne_Current_State__c" /><!--value="{!v.newmember.Narne_Present_Pincode__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perPstate" fieldName="Narne_Permanent_State__c" /><!--value="{!v.newmember.Narne_Present_Pincode__c}"-->
+                                </lightning:layoutItem>                                
+                            </lightning:layout>
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="prePcountry" fieldName="Narne_Current_Country__c" /><!--value="{!v.newmember.Narne_Present_Pincode__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perPcountry" fieldName="Narne_Permanent_Country__c" /><!--value="{!v.newmember.Narne_Present_Pincode__c}"-->
+                                </lightning:layoutItem>                                
+                            </lightning:layout>
+                            
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="prePcode" fieldName="Narne_Present_Pincode__c" /><!--value="{!v.newmember.Narne_Present_Pincode__c}"-->
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6" padding="around-small">
+                                    <lightning:inputField aura:id="perPcode" fieldName="Narne_Permanent_Pincode__c" /><!--value="{!v.newmember.Narne_Present_Pincode__c}"-->
+                                </lightning:layoutItem>                                
+                            </lightning:layout>                             
+                            <h3 class="slds-section-title--divider">Nominee Details</h3>                           
+                            <lightning:layout multipleRows="true" class="slds-form_horizontal">
+                                
+                                <div class="slds-align_absolute-center">
+                                    <lightning:button variant="brand" label="Add Nominee" title="Brand action" onclick="{! c.addRow }" />
+                                </div>
+                                
+                            </lightning:layout>
+                            <div class="container-fluid">        
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer"> 
+                                    <thead>
+                                        <tr class="slds-text-title_caps">
+                                            <th scope="col">
+                                                <div class="slds-truncate">#</div>
+                                            </th>
+                                            
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Nominee Name">Nominee Name</div>
+                                            </th>
+                                           
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Action">Action</div>
+                                            </th>
+                                        </tr>
+                                    </thead>   
+                                    <tbody>      
+                                        <aura:iteration items="{!v.nomineeList}" var="acc" indexVar="index">
+                                            <tr>
+                                                <td> 
+                                                    {!index + 1}
+                                                </td>
+                                                
+                                                <td>
+                                                    <l_lookup:Lookup aura:id="nomineLookupId" objectType="Nominee__c" selectedRecordId="{!acc.nomineeId}" label="Nominee Name" fuzzySearch="true"/>
+                                                </td>
+                                                <td>
+                                                    <a onclick="{!c.removeRow}" data-record="{!index}">
+                                                        <lightning:icon iconName="utility:delete" size="small" alternativeText="Delete"/>
+                                                        <span class="slds-assistive-text">Delete</span>
+                                                    </a>
+                                                </td> 
+                                            </tr>
+                                        </aura:iteration>
+                                    </tbody>
+                                </table>
+                            </div>                           
+                        </div>
+                        <!--Modal/Popup Box Footer Starts here-->
+                        <footer class="slds-modal__footer">
+                            <div class="slds-align_absolute-center">
+                                <lightning:button class="slds-m-top_small" onclick="{!c.handleOnCancel}" label="Cancel"/>
+                                <lightning:button class="slds-m-top_small" type="submit" label="Save" variant="brand"/>
+                            </div>
+                        </footer>
+                    </div>
+                    
+                </section>
+                <div aura:id="overlay" class="slds-backdrop slds-backdrop--open"></div>
+            </aura:if>
+        </lightning:recordEditForm>           
+    </div>
+</aura:component>
