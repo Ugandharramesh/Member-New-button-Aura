@@ -1,0 +1,247 @@
+public class NewMemberController {
+    @AuraEnabled
+    public static void updateNominees(String nomList, string memberId){
+       // for(Nominee__c no:nomList)
+        //Insert nomList;
+        List<NomineeWrapper> nomWrapList = (List<NomineeWrapper>)JSON.deserialize(nomList, List<NomineeWrapper>.class);
+        system.debug('nomWrapList------->'+nomWrapList);
+        system.debug('MemberId------->'+memberId);
+        List<Nominee__c> nmList = new List<Nominee__c>();
+        for(NomineeWrapper nw:nomWrapList){
+            Nominee__c nmRecord = new Nominee__c();
+            nmRecord.Id = nw.nomineeId;
+            nmRecord.Narne_Nominee_del__c  = memberId;
+            nmList.add(nmRecord);
+        }
+        system.debug('hii----nmList'+nmList);
+        if(nmList.isEmpty() == false){
+            update nmList;
+        }
+    }
+    @AuraEnabled
+    Public static NomineeWrapper getNomineeRecords(String nomineeId){
+        NomineeWrapper nomWrap = new NomineeWrapper();
+        list<Nominee__c> nomineeRecords=[SELECT Id, Narne_First_Name__c, Narne_Last_Name__c from Nominee__c WHERE Id=:nomineeId];
+        string nomName = nomineeRecords[0].Narne_First_Name__c;
+        string nomLastName = nomineeRecords[0].Narne_Last_Name__c;
+        String nomId = nomineeRecords[0].Id;
+        nomWrap.nomName = nomName;
+        nomWrap.nomLName = nomLastName;
+        nomWrap.nomId = nomId;
+        return nomWrap;
+    }
+    @AuraEnabled
+    Public static ContactWrapper getContactRecords(String contactId){
+        ContactWrapper conWrap = new ContactWrapper();
+        list<Contact> contactRecords=[SELECT Id, Name,Salutation,FirstName,MiddleName,LastName, Narne_Gender__c,
+                                      Narne_Date_of_Birth__c,Narne_Occupation__c,Defence__c,
+                                      MobilePhone,Narne_Mobile_2__c,Email,Narne_Email_2__c,
+                                      MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,
+                                      OtherAddress,Narne_Present_Area__c,Narne_Current_Country__c,Narne_Present_House_No__c,
+                                      Narne_Present_Landmark__c,Narne_Present_Pincode__c,Narne_Current_State__c,
+                                      Narne_Present_Street__c,Narne_Present_City__c,
+                                      Narne_Permanent_Area__c,Narne_Permanent_Country__c,Narne_Permanent_House_No__c,
+                                      Narne_Permanent_Landmark__c,Narne_Permanent_Pincode__c,Narne_Permanent_State__c,
+                                      Narne_Permanent_Street__c,Narne_Permanent_City__c
+                                      from Contact WHERE Id=:contactId];
+        
+        conWrap.conId = contactRecords[0].Id;
+        conWrap.conSalutation = contactRecords[0].Salutation;
+        conWrap.conFname = contactRecords[0].FirstName;
+        conWrap.conMname = contactRecords[0].MiddleName;
+        conWrap.conLname = contactRecords[0].LastName;
+        conWrap.conDOB = contactRecords[0].Narne_Date_of_Birth__c;
+        conWrap.conGender = contactRecords[0].Narne_Gender__c;
+        conWrap.conOccupation = contactRecords[0].Narne_Occupation__c;
+        conWrap.conEmail1 = contactRecords[0].Email;
+        conWrap.conEmail2 = contactRecords[0].Narne_Email_2__c;
+        conWrap.conMobile1 = contactRecords[0].MobilePhone;
+        conWrap.conMobile2 = contactRecords[0].Narne_Mobile_2__c;
+        conWrap.conDefence = contactRecords[0].Defence__c;
+        
+        //For Mapping Current Address
+        conWrap.conCurArea = contactRecords[0].Narne_Present_Area__c;
+        conWrap.conCurHouse = contactRecords[0].Narne_Present_House_No__c;
+        conWrap.conCurLandmark = contactRecords[0].Narne_Present_Landmark__c;
+        conWrap.conCurPincode = contactRecords[0].Narne_Present_Pincode__c;
+        conWrap.conCurState = contactRecords[0].Narne_Current_State__c;
+        conWrap.conCurStreet = contactRecords[0].Narne_Present_Street__c;
+        conWrap.conCurVillage = contactRecords[0].Narne_Present_City__c;
+        conWrap.conCurCountry = contactRecords[0].Narne_Current_Country__c;
+        
+        //For Mapping Permanent Address
+        conWrap.conPerArea = contactRecords[0].Narne_Permanent_Area__c;
+        conWrap.conPerHouse = contactRecords[0].Narne_Permanent_House_No__c;
+        conWrap.conPerLandmark = contactRecords[0].Narne_Permanent_Landmark__c;
+        conWrap.conPerPincode = contactRecords[0].Narne_Permanent_Pincode__c;
+        conWrap.conPerState = contactRecords[0].Narne_Permanent_State__c;
+        conWrap.conPerStreet = contactRecords[0].Narne_Permanent_Street__c;
+        conWrap.conPerVillage = contactRecords[0].Narne_Permanent_City__c;
+        conWrap.conPerCountry = contactRecords[0].Narne_Permanent_Country__c;
+  
+        return conWrap;
+    }
+    @AuraEnabled
+    Public static List<Contact> searchContactMethod(String mPhone,String emailId){
+        List<contact> conList = [SELECT Id, Name,Salutation,FirstName,MiddleName,LastName, Narne_Gender__c,
+                                Narne_Date_of_Birth__c,Narne_Occupation__c,Defence__c,
+                                MobilePhone,Narne_Mobile_2__c,Email,Narne_Email_2__c,
+                                 MailingCity,MailingStreet,MailingState,MailingPostalCode,MailingCountry,
+                                 OtherCity,OtherStreet,OtherState,OtherPostalCode,OtherCountry,
+                                 Narne_Present_Area__c,Narne_Current_Country__c,Narne_Present_House_No__c,
+                                 Narne_Present_Landmark__c,Narne_Present_Pincode__c,Narne_Current_State__c,
+                                 Narne_Present_Street__c,Narne_Present_City__c,
+                                 Narne_Permanent_Area__c,Narne_Permanent_Country__c,Narne_Permanent_House_No__c,
+                                 Narne_Permanent_Landmark__c,Narne_Permanent_Pincode__c,Narne_Permanent_State__c,
+                                 Narne_Permanent_Street__c,Narne_Permanent_City__c
+                                 from Contact WHERE (MobilePhone != Null AND MobilePhone=:mPhone) OR (Narne_Mobile_2__c != Null AND Narne_Mobile_2__c=:mPhone) OR (Email != Null AND Email=:emailId) OR (Narne_Email_2__c != Null AND Narne_Email_2__c=:emailId)];
+       
+        return conList; 
+    }
+    @AuraEnabled
+    Public static MemberWrapper getAccountRecord(string accountId){
+        MemberWrapper accWrap = new MemberWrapper();
+        list<Account> acc=[SELECT Id,Name FROM Account WHERE Id=:accountId];
+        String cusName = acc[0].Name;
+        String firstName=cusName.substringBeforeLast(' ');
+        String lastName=cusName.substringAfterLast(' ');
+        accWrap.firstName=firstName;
+        accWrap.lastName=lastName;
+        return accWrap;
+    }
+    @AuraEnabled
+    public static MemberWrapper getProjectRecord(string projectId){
+        MemberWrapper memWrap = new MemberWrapper();
+        try{
+            //list<Account> account = [SELECT Id,Name, Narne_First_Name__c, Narne_Last_Name__c FROM Account WHERE Id=:projectId];
+            //String firstName = account[0].Name;
+            list<Narne_Project__c> projectRecords = [SELECT Id, Narne_Previously_Assigned_Mem_No__c FROM Narne_Project__c WHERE Id=:projectId];
+            if(projectRecords.isEmpty()==false){
+                Decimal memNo = projectRecords[0].Narne_Previously_Assigned_Mem_No__c;
+                memNo = memNo+1;
+                projectRecords[0].Narne_Previously_Assigned_Mem_No__c++;
+                memWrap.projectRecord = projectRecords[0];
+                memWrap.memNo = string.valueOf(memNo);                
+            }
+        }
+        catch(Exception e){
+            system.debug('e-->' + e.getMessage());
+        }        
+        return memWrap;
+    } 
+    @AuraEnabled
+    public static string createAttachments (string recordId, string filesData, string docsData){
+        system.debug('recordId--->'+recordId);
+        set<Id> documentIds = new set<Id>();
+        List<contentDocumentLink> insConD = new List<contentDocumentLink>();
+        List<UploadWrapper> upWrap = (List<UploadWrapper>)JSON.deserialize(filesData, List<UploadWrapper>.class);
+        system.debug('upWrap--->'+upWrap);
+        for(UploadWrapper uw:upWrap){
+            documentIds.add(uw.documentId);
+        }
+        List<UploadWrapper> upWrap01 = (List<UploadWrapper>)JSON.deserialize(docsData, List<UploadWrapper>.class);
+        system.debug('upWrap01--->'+upWrap01);
+        for(UploadWrapper uw:upWrap01){
+            documentIds.add(uw.documentId);
+        }
+        system.debug('documentIds--->'+documentIds);
+        for(contentDocument cd:[SELECT Id FROM contentdocument WHERE Id IN:documentIds]){
+            ContentDocumentLink contentlink = new ContentDocumentLink();
+            contentlink.LinkedEntityId = recordId;
+            contentlink.contentdocumentid = cd.Id;
+            contentlink.ShareType = 'V';
+            insConD.add(contentlink);
+        }
+        if(insConD.isEmpty()==false){
+            insert insConD;
+        }
+        system.debug('upWrap--->'+upWrap);
+        return 'uploaded';
+    } 
+    @AuraEnabled
+    public static string createIdentification (string recordId, string docsData){
+        system.debug('recordId--->'+recordId);
+        set<Id> IdentificationdocumentIds = new set<Id>();
+        List<contentDocumentLink> insIdenD = new List<contentDocumentLink>();
+        List<IdentificationWrapper> upWrap = (List<IdentificationWrapper>)JSON.deserialize(docsData, List<IdentificationWrapper>.class);
+        for(IdentificationWrapper uw:upWrap){
+            IdentificationdocumentIds.add(uw.documentId);
+        }
+        system.debug('IdentificationdocumentIds--->'+IdentificationdocumentIds);
+        for(contentDocument cd:[SELECT Id FROM contentdocument WHERE Id IN:IdentificationdocumentIds]){
+            ContentDocumentLink contentlink = new ContentDocumentLink();
+            contentlink.LinkedEntityId = recordId;
+            contentlink.contentdocumentid = cd.Id;
+            contentlink.ShareType = 'V';
+            insIdenD.add(contentlink);
+        }
+        if(insIdenD.isEmpty()==false){
+            insert insIdenD;
+        }
+        system.debug('upWrap--->'+upWrap);
+        return 'uploaded';
+    }
+    public class MemberWrapper{
+        @AuraEnabled public Narne_Project__c projectRecord;
+        @AuraEnabled public String memNo;
+        @AuraEnabled public Account acc;
+        @AuraEnabled public String firstName;
+        @AuraEnabled public String lastName;        
+    }
+    public class UploadWrapper{
+        @AuraEnabled public String name;
+        @AuraEnabled public String documentId;
+        @AuraEnabled public String contentVersionId;
+        @AuraEnabled public String contentBodyId;
+        @AuraEnabled public String mimeType;        
+    }
+    public class IdentificationWrapper{
+        @AuraEnabled public String name;
+        @AuraEnabled public String documentId;
+        @AuraEnabled public String contentVersionId;
+        @AuraEnabled public String contentBodyId;
+        @AuraEnabled public String mimeType;        
+    }
+    Public class NomineeWrapper{
+        @AuraEnabled public String nomName;
+        @AuraEnabled public String nomLName;
+        @AuraEnabled public String nomId;
+        @AuraEnabled public String nomineeId;
+    }
+    Public class ContactWrapper{
+        @AuraEnabled public String conId;
+        @AuraEnabled public String conSalutation;
+        @AuraEnabled public String conFname;
+        @AuraEnabled public String conMname;
+        @AuraEnabled public String conLname;
+        @AuraEnabled public Date conDOB;
+        @AuraEnabled public String conGender;
+        @AuraEnabled public String conOccupation;
+        @AuraEnabled public String conEmail1;
+        @AuraEnabled public String conEmail2;
+        @AuraEnabled public String conDefence;
+        @AuraEnabled public String conMobile1;
+        @AuraEnabled public String conMobile2;
+        
+        //For Current Address
+        @AuraEnabled public String conCurArea;
+        @AuraEnabled public String conCurHouse;
+        @AuraEnabled public String conCurCountry;
+        @AuraEnabled public String conCurLandmark;
+        @AuraEnabled public String conCurPincode;
+        @AuraEnabled public String conCurState;
+        @AuraEnabled public String conCurStreet;
+        @AuraEnabled public String conCurVillage;
+        
+        //For permanent Address
+        @AuraEnabled public String conPerArea;
+        @AuraEnabled public String conPerHouse;
+        @AuraEnabled public String conPerCountry;
+        @AuraEnabled public String conPerLandmark;
+        @AuraEnabled public String conPerPincode;
+        @AuraEnabled public String conPerState;
+        @AuraEnabled public String conPerStreet;
+        @AuraEnabled public String conPerVillage;        
+        
+    }
+}
